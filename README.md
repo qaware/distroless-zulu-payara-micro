@@ -4,8 +4,12 @@ Custom Docker images that combine the Google Distroless Image with Zulu OpenJDK 
 
 All the images are tuned for Docker usage, especially concerning the CPU, RAM and thus JVM heap usage.
 ```
-docker run -it --rm --cpus 1 --memory 640m qaware/distroless-zulu-payara-micro:8u212-5.191
+docker run -it --rm --cpus 1 --memory 640m qaware/distroless-zulu-payara-micro:8u212-5.192
 ```
+
+For more information about Payara Server and Payara Micro have a look at the documentation: https://payara.gitbooks.io/payara-server/content/
+
+For more information and detaials about the individual release versions have a look at the release notes as well as the Github releases pages: https://github.com/payara/Payara/releases
 
 # Maintainer
 
