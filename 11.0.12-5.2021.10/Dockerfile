@@ -1,5 +1,5 @@
 ARG ZULU_VERSION
-FROM azul/zulu-openjdk-centos:$ZULU_VERSION as build
+FROM azul/zulu-openjdk-centos:17 as build
 
 ENV PAYARA_PATH /opt/payara
 
@@ -24,10 +24,9 @@ ENV PKG_FILE_NAME payara-micro.jar
 
 RUN curl --silent --location --show-error --output $PAYARA_PATH/$PKG_FILE_NAME $PAYARA_PKG
 
-FROM gcr.io/distroless/base
+FROM gcr.io/distroless/java11-debian11
 LABEL maintainer="qaware-oss@qaware.de"
 
-ENV JAVA_HOME /usr/lib/jvm/zulu11
 ENV PAYARA_PATH /opt/payara
 ENV DEPLOY_DIR $PAYARA_PATH/deployments
 ENV AUTODEPLOY_DIR $PAYARA_PATH/deployments
@@ -38,18 +37,18 @@ COPY etc_profile /etc/profile
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/group /etc/group
 
-COPY --from=amd64/busybox:1.34.0 /bin/busybox /busybox/busybox
+COPY --from=busybox:1.34.0 /bin/busybox /busybox/busybox
 RUN ["/busybox/busybox", "--install", "/bin"]
+RUN ["java", "-Xshare:dump"]
 
 USER payara
 WORKDIR $PAYARA_PATH
 
 COPY --from=build $PAYARA_PATH $PAYARA_PATH
-COPY --from=build $JAVA_HOME $JAVA_HOME
 COPY --from=build /usr/lib64/libz.* /lib/x86_64-linux-gnu/
 
 # Default payara ports to expose
 EXPOSE 8080 8443 6900
 
-ENTRYPOINT ["/usr/lib/jvm/zulu11/bin/java", "-server", "-Xshare:on", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=50.0", "-XX:ThreadStackSize=256", "-XX:MaxMetaspaceSize=128m", "-XX:+UseShenandoahGC", "-XX:+AlwaysPreTouch", "-XX:+UseNUMA", "-XX:+UseStringDeduplication", "-jar", "/opt/payara/payara-micro.jar"]
+ENTRYPOINT ["java", "-server", "-Xshare:on", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=50.0", "-XX:ThreadStackSize=256", "-XX:MaxMetaspaceSize=128m", "-XX:+UseShenandoahGC", "-XX:+AlwaysPreTouch", "-XX:+UseNUMA", "-XX:+UseStringDeduplication", "-jar", "/opt/payara/payara-micro.jar"]
 CMD ["--nocluster", "--disablephonehome", "--deploymentDir", "/opt/payara/deployments"]
